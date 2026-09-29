@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dft-hpc-toolkit"
+version = "0.1.0"
+description = "Slurm templates, convergence scans and output parsers for VASP and Quantum ESPRESSO"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "Ata Berk Öztürk"}]
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.5"]
+test = ["pytest>=7"]
+
+[project.scripts]
+dfthpc = "dfthpc.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

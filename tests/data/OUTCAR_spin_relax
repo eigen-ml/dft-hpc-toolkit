@@ -1,0 +1,47 @@
+ vasp.5.4.1 05Feb16 (build Oct 26 2017 15:18:23) complex
+  
+ executed on           IFC91_ompi date 2025.01.01  00:00:00
+ running on   16 total cores
+ Short synthetic OUTCAR excerpt for tests: two ionic steps, ISPIN=2.
+ Line formats copied from VASP 5.4.1 output, numbers are made up.
+   k-points           NKPTS =     12   k-points in BZ     NKDIM =     12   number of bands    NBANDS=     24
+   number of dos      NEDOS =    301   number of ions     NIONS =      3
+   ISPIN  =      2    spin polarized calculation?
+   ENCUT  =  500.0 eV  36.75 Ry    6.06 a.u.   8.18  8.18 62.00*2*pi/ulx,y,z
+   NELM   =     60;   NELMIN=  2; NELMDL= -5     # of ELM steps 
+   EDIFF  = 0.1E-05   stopping-criterion for ELM
+----------------------------------------- Iteration    1(   1)  ---------------------------------------
+  free energy    TOTEN  =        50.00000000 eV
+  energy without entropy =       50.10000000  energy(sigma->0) =       50.05000000
+----------------------------------------- Iteration    1(   2)  ---------------------------------------
+ number of electron      26.0000000 magnetization       3.1000000
+  free energy    TOTEN  =       -20.00000000 eV
+  energy without entropy =      -20.10000000  energy(sigma->0) =      -20.05000000
+------------------------ aborting loop because EDIFF is reached ----------------------------------------
+ E-fermi :  -1.5000     XC(G=0):  -3.4330     alpha+bet : -2.8485
+  FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)
+  ---------------------------------------------------
+  free  energy   TOTEN  =       -20.00000000 eV
+
+  energy  without entropy=      -20.10000000  energy(sigma->0) =      -20.05000000
+----------------------------------------- Iteration    2(   1)  ---------------------------------------
+  free energy    TOTEN  =       -20.40000000 eV
+  energy without entropy =      -20.50000000  energy(sigma->0) =      -20.45000000
+----------------------------------------- Iteration    2(   2)  ---------------------------------------
+----------------------------------------- Iteration    2(   3)  ---------------------------------------
+ number of electron      26.0000000 magnetization       3.0000000
+  free energy    TOTEN  =       -20.60000000 eV
+  energy without entropy =      -20.70000000  energy(sigma->0) =      -20.65000000
+------------------------ aborting loop because EDIFF is reached ----------------------------------------
+ E-fermi :  -1.2345     XC(G=0):  -3.4330     alpha+bet : -2.8485
+  FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)
+  ---------------------------------------------------
+  free  energy   TOTEN  =       -20.60000000 eV
+
+  energy  without entropy=      -20.70000000  energy(sigma->0) =      -20.65000000
+ reached required accuracy - stopping structural energy minimisation
+ General timing and accounting informations for this job:
+ ========================================================
+                  Total CPU time used (sec):      400.000
+                         Elapsed time (sec):      123.456
+                   Maximum memory used (kb):      250000.

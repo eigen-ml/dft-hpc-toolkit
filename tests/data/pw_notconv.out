@@ -1,0 +1,8 @@
+     Program PWSCF v.7.4.1 starts on  1Jan2025 at  0: 0: 0 
+     number of atoms/cell      =            1
+     kinetic-energy cutoff     =      30.0000  Ry
+     number of k points=     1
+
+     Self-consistent Calculation
+
+     convergence NOT achieved after 100 iterations: stopping
