@@ -1,4 +1,4 @@
-"""Command line entry point: ``dfthpc parse | scan | summary``."""
+"""Command line entry point: ``dfthpc parse | scan | summary | watch``."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from typing import List, Optional
 from . import __version__
 from .scan import ScanError, qe_scan, vasp_scan
 from .summary import parse_any, plot, summarize_scan, write_csv
+from .watch import format_history, history
 
 
 def _fmt(value, spec: str) -> str:
@@ -75,6 +76,25 @@ def cmd_summary(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_watch(args: argparse.Namespace) -> int:
+    import time
+
+    while True:
+        try:
+            hist = history(args.path)
+        except (OSError, ValueError) as exc:
+            print("ERROR: %s" % exc, file=sys.stderr)
+            return 1
+        print(format_history(hist, last=args.last))
+        if not args.follow:
+            return 0
+        print("-- %s, refreshing every %ds (Ctrl+C to stop)" % (time.strftime("%H:%M:%S"), args.interval))
+        try:
+            time.sleep(args.interval)
+        except KeyboardInterrupt:
+            return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="dfthpc", description=__doc__)
     parser.add_argument("--version", action="version", version=__version__)
@@ -99,6 +119,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--csv", help="also write the table to this CSV file")
     p.add_argument("--plot", help="also save a PNG plot (needs matplotlib)")
     p.set_defaults(func=cmd_summary)
+    p = sub.add_parser("watch", help="show the SCF history of a VASP or pw.x run")
+    p.add_argument("path", help="VASP run directory (OSZICAR), pw.x output, or a directory with one")
+    p.add_argument("--last", type=int, default=20, help="show the last N ionic steps (default 20)")
+    p.add_argument("--follow", "-f", action="store_true", help="refresh until interrupted")
+    p.add_argument("--interval", type=int, default=30, help="seconds between refreshes with --follow")
+    p.set_defaults(func=cmd_watch)
     return parser
 
 

@@ -1,0 +1,11 @@
+     Synthetic pw.x excerpt for tests (line formats from QE, numbers made up).
+     iteration #  1     ecut=    30.00 Ry     beta= 0.70
+     total energy              =     -15.80000000 Ry
+     estimated scf accuracy    <       0.05000000 Ry
+     iteration #  2     ecut=    30.00 Ry     beta= 0.70
+     total energy              =     -15.84000000 Ry
+     estimated scf accuracy    <       0.00100000 Ry
+     iteration #  3     ecut=    30.00 Ry     beta= 0.70
+!    total energy              =     -15.84400000 Ry
+     estimated scf accuracy    <       0.00000050 Ry
+     convergence has been achieved in   3 iterations

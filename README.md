@@ -7,7 +7,9 @@ Small tools I use around VASP and Quantum ESPRESSO runs on Slurm clusters:
 - **Slurm job templates** for VASP, pw.x and job arrays over a convergence scan
 - **Convergence scans**: one directory per cutoff or k-point mesh, from a template input
 - **Output parsers** for VASP `OUTCAR` and pw.x output (final energy, SCF/relaxation status, Fermi level, magnetization, timing)
-- **Notes** on building QE and setting up single-node Slurm on Rocky Linux 8
+- **`dfthpc watch`**: SCF history of a running or finished job, with steps that hit the iteration limit marked
+- **A scaling benchmark** (AUSURF112 with 1–8 MPI ranks) from an HPC internship
+- **Notes** on building QE, single-node Slurm and containers (Docker / Apptainer) on Rocky Linux 8
 
 Pure Python standard library (3.9+), so it runs on cluster login nodes without installing anything else. Plotting is optional and needs matplotlib.
 
@@ -68,6 +70,24 @@ VASP fields: version, cores, NIONS, NKPTS, ISPIN, ENCUT, NELM, EDIFF, energy (TO
 
 pw.x fields: version, calculation type (scf / relax / nscf-bands), atoms, ecutwfc, k-points, last `!` total energy in Ry and eV, number of SCF cycles, iterations of the last one, SCF converged, Fermi energy (or highest occupied level; spin up/down Fermi energies when printed), total magnetization, BFGS converged, finished (`JOB DONE`), wall time.
 
+## Watching a job
+
+```bash
+dfthpc watch run_dir/            # VASP: reads OSZICAR (and NELM from INCAR)
+dfthpc watch pw.out -f           # pw.x output, refresh every 30 s
+```
+
+```text
+ ionic   scf scf acc. [Ry]        energy [Ry]      mag
+     1    15      7.00e-09       -43.12301771        -
+     2     9      1.30e-09       -43.08067584        -
+     3    10      1.60e-09       -43.12635026        -
+     4     6      8.00e-10       -43.12647146        -
+     5     8      7.00e-11       -43.12647356        -
+```
+
+(Output for the `relax-el` reference run of the QE test suite.) For VASP the column is the last `dE` of each SCF loop in eV and the magnetization from `OSZICAR`; a step whose SCF count reached NELM is marked, since its energy is not converged.
+
 ## Slurm templates
 
 | File | Use |
@@ -81,7 +101,7 @@ Edit the `#SBATCH` lines for your cluster. The program and environment are set b
 ## What is tested
 
 - Parsers: unit tests on short OUTCAR and pw.x excerpts (`tests/data/`; line formats copied from real output, numbers made up). Outside CI, the VASP parser was run on 109 OUTCARs from my own calculations: final energies match `OSZICAR` to its printed precision and ionic step counts match for all 105 runs that have an `OSZICAR`. The pw.x parser was checked against 12 reference outputs from the Quantum ESPRESSO test suite (scf, lsda, relax, bands). Those files are not included here.
-- Scans and summary: unit tests on generated directories.
+- Scans, summary and watch: unit tests on generated directories and short excerpts.
 - Slurm templates: `bash -n` and shellcheck, and CI runs them with bash using a fake command in place of VASP/pw.x (checks directory selection, input checks and the `JOB DONE` check). CI does not have Slurm, VASP or QE, so real submissions are not tested there.
 
 ```bash
@@ -89,12 +109,17 @@ pip install ".[test]"
 pytest
 ```
 
+## Benchmark
+
+[`benchmarks/ausurf112`](benchmarks/ausurf112): the AUSURF112 QE benchmark on an 8-vCPU Xeon E5-2697 v2 virtual machine, 1 to 8 MPI ranks. Speedup 6.96 on 8 ranks (87% parallel efficiency), with notes on what limited it.
+
 ## Notes
 
 - [Single-node Slurm on Rocky Linux 8](docs/slurm-single-node-rocky8.md)
-- [Building Quantum ESPRESSO 7.4.1 on Rocky Linux 8](docs/qe-build-rocky8.md)
+- [Building Quantum ESPRESSO 7.4.1 on Rocky Linux 8](docs/qe-build-rocky8.md) ([Türkçe](docs/tr/qe-derleme-rocky8.md))
+- [Conda, Docker and Apptainer on Rocky Linux 8](docs/containers-apptainer.md)
 
-Both come from notes I wrote during an HPC internship in 2025.
+These come from documentation I wrote during an HPC internship in 2025.
 
 ## License
 
