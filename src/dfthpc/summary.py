@@ -124,6 +124,13 @@ def plot(summary: Dict[str, Any], path: "str | Path") -> None:
     if not done:
         raise ValueError("nothing to plot: no finished calculations with an energy")
     labels = [str(r["value"]) for r in done]
+    xlabel = done[0]["parameter"]
+    if not xlabel:
+        # directory names like ENCUT500 / ENCUT600: move the shared prefix to the axis label
+        prefix = re.match(r"[A-Za-z_]*", labels[0]).group()
+        if prefix and all(label.startswith(prefix) for label in labels):
+            labels = [label[len(prefix):].lstrip("_") for label in labels]
+            xlabel = prefix.rstrip("_")
     deltas = [r["delta_mev_per_atom"] for r in done]
     fig, ax = plt.subplots(figsize=(5, 3.5))
     ax.plot(range(len(done)), deltas, "o-")
@@ -132,7 +139,7 @@ def plot(summary: Dict[str, Any], path: "str | Path") -> None:
     ax.set_xticks(range(len(done)))
     rotate = len(labels) > 4 or max(len(label) for label in labels) > 6
     ax.set_xticklabels(labels, rotation=45 if rotate else 0, ha="right" if rotate else "center")
-    ax.set_xlabel(done[0]["parameter"] or "setting")
+    ax.set_xlabel(xlabel or "setting")
     ax.set_ylabel("E - E(last) [meV/atom]")
     ax.legend(frameon=False)
     fig.tight_layout()

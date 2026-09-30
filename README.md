@@ -4,12 +4,19 @@
 
 Small tools I use around VASP and Quantum ESPRESSO runs on Slurm clusters:
 
-- **Slurm job templates** for VASP, pw.x and job arrays over a convergence scan
-- **Convergence scans**: one directory per cutoff or k-point mesh, from a template input
-- **Output parsers** for VASP `OUTCAR` and pw.x output (final energy, SCF/relaxation status, Fermi level, magnetization, timing)
-- **`dfthpc watch`**: SCF history of a running or finished job, with steps that hit the iteration limit marked
-- **A scaling benchmark** (AUSURF112 with 1–8 MPI ranks) from an HPC internship
-- **Notes** on building QE, single-node Slurm and containers (Docker / Apptainer) on Rocky Linux 8
+- Slurm job templates for VASP, pw.x and job arrays over a convergence scan
+- convergence scans: one directory per cutoff or k-point mesh, then a table and plot of the results
+- output parsers for VASP `OUTCAR` and pw.x output (final energy, SCF and relaxation status, Fermi level, magnetization, timing)
+- `dfthpc watch` to follow the SCF of a running job
+- an AUSURF112 scaling benchmark from an HPC internship
+- notes on building QE, single-node Slurm and containers (Docker / Apptainer) on Rocky Linux 8
+
+<p>
+  <img src="docs/img/encut_graphene.png" width="46%" alt="ENCUT convergence of graphene">
+  <img src="benchmarks/ausurf112/scaling.png" width="52%" alt="AUSURF112 speedup and parallel efficiency">
+</p>
+
+Left: a cutoff convergence test for graphene (VASP) made with `dfthpc summary`. Right: speedup of the AUSURF112 benchmark on 1–8 MPI ranks.
 
 Pure Python standard library (3.9+), so it runs on cluster login nodes without installing anything else. Plotting is optional and needs matplotlib.
 
@@ -36,7 +43,7 @@ sbatch --array=0-5 slurm/scan_array.sbatch encut_scan
 dfthpc summary encut_scan --tol 1 --csv encut.csv --plot encut.png
 ```
 
-`summary` prints the energy per atom of each run, its difference to the most expensive setting (highest cutoff or densest mesh) in meV/atom, whether the SCF converged, and the first setting from which all later ones stay within the tolerance. Output from a real graphene ENCUT scan of mine (VASP 5.4.1):
+`summary` prints the energy per atom of each run, its difference to the most expensive setting (highest cutoff or densest mesh) in meV/atom, whether the SCF converged, and the first setting from which all later ones stay within the tolerance. Output for the graphene scan in the plot above (VASP 5.4.1):
 
 ```text
 dir                value           E/atom [eV]    dE [meV/at]    scf  time [s]
