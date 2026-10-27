@@ -24,13 +24,13 @@ def _run(script, args, cwd, **env):
 
 
 def test_scripts_parse():
-    for script in (ROOT / "slurm").glob("*.sbatch"):
+    scripts = sorted((ROOT / "slurm").glob("*.sbatch")) + sorted((ROOT / "slurm").glob("*.sh"))
+    for script in scripts:
         assert subprocess.run([BASH, "-n", str(script)]).returncode == 0, script
 
 
-def test_array_task_runs_the_right_directory(tmp_path):
-    vasp_scan(DATA / "vasp_template", tmp_path / "scan", "ENCUT", ["400", "500"])
-    # the template has no POTCAR; the fake command does not need one
+def test_array_task_runs_the_right_directory(tmp_path, vasp_template):
+    vasp_scan(vasp_template, tmp_path / "scan", "ENCUT", ["400", "500"])
     result = _run("scan_array.sbatch", ["scan"], tmp_path,
                   SLURM_ARRAY_TASK_ID="1", VASP_CMD="echo fake-vasp")
     assert result.returncode == 0, result.stderr
