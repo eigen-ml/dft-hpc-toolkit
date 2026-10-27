@@ -138,13 +138,14 @@ Each job (`slurm/truba_vasp.sbatch`):
 - writes `status/<jobid>.csv` (one file per job, since file locks are not reliable on Weka): time, job, step, directory, exit code, SCF / relaxation reached, energy, total and per-ion moments, time and core-hours;
 - with `CLEAN=1` deletes `WAVECAR`, `CHG`, `CHGCAR` and `WAVEDER` after a passing check (`/arf` allows 500 000 files and 2 TB).
 
-Python on TRUBA: the job calls `python3 -m dfthpc` from the clone with the standard library only, which works on Python 3.6 or newer (checked with vermin; the output is ASCII, so a C locale is fine). Which `python3` the compute nodes have is not checked yet: run `python3 --version` in the dry run, or set `PYTHON_MODULE` to a module from `module avail python`; it is loaded for the `dfthpc` calls only, never for VASP. The scripts have not run on TRUBA yet; the first run is the dry run on the `debug` queue with cheap inputs (low ENCUT, small k-mesh, a few NSW).
+Python on TRUBA: the job calls `python3 -m dfthpc` from the clone with the standard library only, which works on Python 3.6 or newer (CI runs these commands on 3.6 in a C locale). Which `python3` the compute nodes have is not checked yet: run `python3 --version` in the dry run, or set `PYTHON_MODULE` to a module from `module avail python`; it is loaded for the `dfthpc` calls only, never for VASP. The scripts have not run on TRUBA yet; the first run is the dry run on the `debug` queue with cheap inputs (low ENCUT, small k-mesh, a few NSW).
 
 ## What is tested
 
 - Parsers: unit tests on short OUTCAR and pw.x excerpts (`tests/data/`; line formats copied from real output, numbers made up). The VASP 6 excerpts are synthetic (`*_synthetic`): a relaxation killed in the middle of an SCF loop, one that used up NSW, a DFPT run and an AFM run with per-ion moments; their loop layout was compared with public VASP 6.3 / 6.4 OUTCARs. Outside CI, the VASP parser was run on 109 OUTCARs from my own calculations: final energies match `OSZICAR` to its printed precision and ionic step counts match for all 105 runs that have an `OSZICAR`. The pw.x parser was checked against 12 reference outputs from the Quantum ESPRESSO test suite (scf, lsda, relax, bands). Those files are not included here.
 - Scans, summary and watch: unit tests on generated directories and short excerpts.
 - Slurm templates: `bash -n` and shellcheck, and CI runs them with bash using a fake command in place of VASP/pw.x (checks directory selection, input checks and the `JOB DONE` check). The TRUBA chain runs with a fake `sbatch` that starts each job at once and cancels it when its `afterok` dependency failed: CONTCAR hand-over, supercell, status rows, `STOPCAR` on USR1, and that the chain stops after an unconverged step. CI does not have Slurm, VASP or QE, so real submissions are not tested there.
+- `dfthpc` commands on Python 3.6 (a separate CI job in a `python:3.6-slim` container).
 
 ```bash
 pip install ".[test]"
