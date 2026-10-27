@@ -4,13 +4,11 @@ Each scan writes ``dirs.txt`` (one directory per line, used by the Slurm array
 script) and ``scan.json`` (parameter and value for each directory).
 """
 
-from __future__ import annotations
-
 import json
 import re
 import shutil
 from pathlib import Path
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 
 VASP_INPUTS = ("INCAR", "POSCAR", "KPOINTS", "POTCAR")
 
@@ -31,11 +29,34 @@ def parse_mesh(text: str) -> List[int]:
     return mesh
 
 
+def get_incar_tag(incar: str, tag: str) -> Optional[str]:
+    """Value of the first ``TAG = value`` in an INCAR, or None (comments and ``;`` handled)."""
+    statement = re.compile(r"(?:^|;)\s*%s\s*=\s*([^;]*)" % re.escape(tag), re.IGNORECASE)
+    for line in incar.splitlines():
+        match = statement.search(re.match(r"[^#!]*", line).group())
+        if match:
+            return match.group(1).strip()
+    return None
+
+
 def set_incar_tag(incar: str, tag: str, value: str) -> str:
-    """Replace ``TAG = old`` (keeping any comment) or append the tag."""
-    pattern = re.compile(r"^(\s*%s\s*=\s*)([^#!\n]*)" % re.escape(tag), re.IGNORECASE | re.MULTILINE)
-    if pattern.search(incar):
-        return pattern.sub(lambda m: m.group(1) + value + " ", incar, count=1).replace(" \n", "\n")
+    """Set ``TAG = value`` wherever the tag is set, or append it.
+
+    Comments and other tags on the same line (``ENCUT = 400; ISMEAR = 0``) are kept.
+    """
+    statement = re.compile(r"(^|;)(\s*%s\s*=\s*)[^;]*" % re.escape(tag), re.IGNORECASE)
+    lines = incar.splitlines(True)
+    found = False
+    for i, line in enumerate(lines):
+        body = line.rstrip("\r\n")
+        end = line[len(body):]
+        code, comment = re.match(r"([^#!]*)(.*)", body).groups()
+        code, count = statement.subn(lambda m: m.group(1) + m.group(2) + value, code)
+        if count:
+            found = True
+            lines[i] = (code.rstrip() + " " + comment if comment else code) + end
+    if found:
+        return "".join(lines)
     if not incar.endswith("\n"):
         incar += "\n"
     return incar + "%s = %s\n" % (tag, value)
@@ -86,12 +107,12 @@ def _prepare_out(out_dir: Path) -> None:
 
 
 def vasp_scan(template: "str | Path", out_dir: "str | Path", parameter: str, values: Sequence[str]) -> List[Dict[str, str]]:
-    """Copy a VASP input set once per value, changing ENCUT or the k-mesh."""
+    """Copy a VASP input set (INCAR, POSCAR, KPOINTS, POTCAR) once per value, changing ENCUT or the k-mesh."""
     template, out_dir = Path(template), Path(out_dir)
     parameter = parameter.upper()
     if parameter not in ("ENCUT", "KPOINTS"):
         raise ScanError("VASP scans support ENCUT or KPOINTS")
-    missing = [name for name in ("INCAR", "POSCAR", "KPOINTS") if not (template / name).is_file()]
+    missing = [name for name in VASP_INPUTS if not (template / name).is_file()]
     if missing:
         raise ScanError("template directory is missing: " + ", ".join(missing))
     _prepare_out(out_dir)
@@ -108,8 +129,7 @@ def vasp_scan(template: "str | Path", out_dir: "str | Path", parameter: str, val
         target = out_dir / name
         target.mkdir()
         for filename in VASP_INPUTS:
-            if (template / filename).is_file():
-                shutil.copy2(template / filename, target / filename)
+            shutil.copy2(template / filename, target / filename)
         if parameter == "ENCUT":
             incar = (target / "INCAR").read_text()
             (target / "INCAR").write_text(set_incar_tag(incar, "ENCUT", value))

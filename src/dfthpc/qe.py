@@ -1,7 +1,5 @@
 """Read the numbers you usually need from a Quantum ESPRESSO pw.x output."""
 
-from __future__ import annotations
-
 import re
 from pathlib import Path
 from typing import Any, Dict, Optional

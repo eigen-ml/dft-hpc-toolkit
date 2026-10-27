@@ -1,7 +1,5 @@
 """Collect results of a convergence scan into one table."""
 
-from __future__ import annotations
-
 import csv
 import json
 import re
@@ -57,8 +55,9 @@ def summarize_scan(scan_dir: "str | Path", tolerance_mev: float = 1.0) -> Dict[s
     """Energies per atom relative to the most expensive setting of the scan.
 
     The reference is the last row after sorting by value (highest cutoff or
-    densest mesh). ``converged_at`` is the first value from which every
-    following row stays within ``tolerance_mev`` meV/atom of the reference.
+    densest mesh) whose SCF converged. ``converged_at`` is the first value from
+    which every following converged row stays within ``tolerance_mev`` meV/atom
+    of the reference. Rows whose SCF did not converge get no ``delta_mev_per_atom``.
     """
     scan_dir = Path(scan_dir)
     manifest_path = scan_dir / "scan.json"
@@ -77,19 +76,27 @@ def summarize_scan(scan_dir: "str | Path", tolerance_mev: float = 1.0) -> Dict[s
             rows.append(row)
             continue
         energy, natoms = _energy_ev(result), _natoms(result)
+        converged = _converged(result)
+        if energy is None:
+            status = "no energy"
+        elif converged is not True:
+            status = "SCF not converged"
+        else:
+            status = "ok"
         row.update(
             energy_ev=energy,
             natoms=natoms,
             energy_per_atom_ev=energy / natoms if energy is not None and natoms else None,
-            scf_converged=_converged(result),
+            scf_converged=converged,
             finished=result.get("finished"),
             elapsed_s=result.get("elapsed_s"),
-            status="ok" if energy is not None else "no energy",
+            status=status,
         )
         rows.append(row)
 
     rows.sort(key=lambda r: _sort_key(str(r["value"])))
-    done = [r for r in rows if r.get("energy_per_atom_ev") is not None]
+    # unconverged energies are shown but take no part in the comparison
+    done = [r for r in rows if r.get("status") == "ok" and r.get("energy_per_atom_ev") is not None]
     converged_at = None
     if done:
         reference = done[-1]["energy_per_atom_ev"]

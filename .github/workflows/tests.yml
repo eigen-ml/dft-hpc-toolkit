@@ -24,4 +24,31 @@ jobs:
       - name: Unit tests
         run: pytest -q
       - name: Shellcheck Slurm templates
-        run: shellcheck -s bash slurm/*.sbatch
+        run: shellcheck -s bash slurm/*.sbatch slurm/*.sh
+
+  python36:
+    # The TRUBA job runs dfthpc from the source tree with whatever python3 the node has
+    # (no pip there; the system python3 of RHEL / Rocky 8 is 3.6). Run the commands the job chain uses on 3.6,
+    # with an ASCII-only C locale as on a batch node.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: dfthpc commands on Python 3.6
+        run: |
+          docker run --rm -v "$PWD:/src:ro" -w /src -e PYTHONPATH=/src/src -e PYTHONDONTWRITEBYTECODE=1 \
+            -e LC_ALL=C -e LANG=C python:3.6-slim sh -ec '
+            python --version
+            python -m dfthpc check tests/data/OUTCAR_spin_relax
+            python -m dfthpc check tests/data/OUTCAR_vasp6_dfpt_synthetic --require scf,ionic,scf-all
+            if python -m dfthpc check tests/data/OUTCAR_vasp6_killed_scf_synthetic; then exit 1; fi
+            python -m dfthpc check tests/data/OUTCAR_vasp6_afm_sites_synthetic --record /tmp/c/status/1.csv --jobid 1
+            python -m dfthpc status /tmp/c
+            python -m dfthpc vacuum tests/data/POSCAR_2d_layer --min 20
+            python -m dfthpc supercell tests/data/POSCAR_2d_layer 4x4x1 -o /tmp/SPOSCAR
+            mkdir -p /tmp/lib/Cr /tmp/lib/I
+            printf "   TITEL  = PAW_PBE Cr 06Sep2000\n   ENMAX  =  227.0; ENMIN = 170.0 eV\n" > /tmp/lib/Cr/POTCAR
+            printf "   TITEL  = PAW_PBE I 08Apr2002\n   ENMAX  =  175.6; ENMIN = 131.7 eV\n" > /tmp/lib/I/POTCAR
+            python -m dfthpc potcar tests/data/POSCAR_2d_layer --root /tmp/lib -o /tmp/POTCAR
+            python -m dfthpc parse tests/data/OUTCAR_vasp6_nsw_reached_synthetic > /dev/null
+            '
