@@ -5,8 +5,6 @@ needed, how the energy change is falling, and whether a step ran into the
 iteration limit.
 """
 
-from __future__ import annotations
-
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
